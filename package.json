@@ -1,0 +1,48 @@
+{
+  "name": "mobility-geofencing-automation-framework",
+  "version": "1.0.0",
+  "description": "Senior-level Playwright + TypeScript automation framework for a Mobility Geofencing Engine",
+  "author": "QA Engineering",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:e2e": "playwright test tests/e2e",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:report": "playwright show-report",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "ts-node src/db/migrations/run.ts",
+    "codegen": "playwright codegen"
+  },
+  "dependencies": {
+    "@turf/turf": "^6.5.0",
+    "axios": "^1.6.7",
+    "dotenv": "^16.4.4",
+    "pg": "^8.20.0",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/geojson": "^7946.0.14",
+    "@types/node": "^20.19.37",
+    "@types/pg": "^8.18.0",
+    "@typescript-eslint/eslint-plugin": "^7.1.1",
+    "@typescript-eslint/parser": "^7.1.1",
+    "eslint": "^8.57.0",
+    "eslint-plugin-playwright": "^1.6.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "keywords": [],
+  "license": "ISC",
+  "type": "commonjs"
+}

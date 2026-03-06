@@ -1,0 +1,40 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Downtown Restricted Zone",
+                "type": "RESTRICTED",
+                "description": "No-entry zone for unauthorised vehicles in the city centre"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            37.6100,
+                            55.7500
+                        ],
+                        [
+                            37.6300,
+                            55.7500
+                        ],
+                        [
+                            37.6300,
+                            55.7650
+                        ],
+                        [
+                            37.6100,
+                            55.7650
+                        ],
+                        [
+                            37.6100,
+                            55.7500
+                        ]
+                    ]
+                ]
+            }
+        }
+    ]
+}

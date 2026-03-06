@@ -1,0 +1,57 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "vehicleId": "vehicle-test-001",
+                "description": "Route from outside moving into the restricted zone"
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        37.6050,
+                        55.7480
+                    ],
+                    [
+                        37.6070,
+                        55.7487
+                    ],
+                    [
+                        37.6090,
+                        55.7494
+                    ],
+                    [
+                        37.6110,
+                        55.7501
+                    ],
+                    [
+                        37.6130,
+                        55.7510
+                    ],
+                    [
+                        37.6150,
+                        55.7520
+                    ],
+                    [
+                        37.6170,
+                        55.7530
+                    ],
+                    [
+                        37.6190,
+                        55.7540
+                    ],
+                    [
+                        37.6200,
+                        55.7550
+                    ],
+                    [
+                        37.6210,
+                        55.7560
+                    ]
+                ]
+            }
+        }
+    ]
+}

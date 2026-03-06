@@ -1,0 +1,64 @@
+{
+    "compilerOptions": {
+        // ── Language & Output ────────────────────────────────────────────────────
+        "target": "ES2022",
+        "module": "NodeNext", // Native ESM for Node.js — requires .js extensions in imports
+        "moduleResolution": "NodeNext", // Matches Node's ESM resolution algorithm
+        "lib": [
+            "ES2022",
+            "DOM"
+        ],
+        // ── Strict Mode (all checks enabled) ─────────────────────────────────────
+        "strict": true,
+        "noUncheckedIndexedAccess": true,
+        "noImplicitOverride": true,
+        "noPropertyAccessFromIndexSignature": true,
+        "exactOptionalPropertyTypes": true,
+        "forceConsistentCasingInFileNames": true,
+        // ── Module Interop ────────────────────────────────────────────────────────
+        "esModuleInterop": true,
+        "resolveJsonModule": true,
+        "skipLibCheck": true, // Speeds up compilation; safe with well-typed deps
+        // ── Output ────────────────────────────────────────────────────────────────
+        "outDir": "./dist",
+        "rootDir": "./",
+        "declaration": true,
+        "declarationMap": true,
+        "sourceMap": true,
+        // ── Path Aliases ──────────────────────────────────────────────────────────
+        // @ maps to src/ for clean imports: import { MapPage } from '@/pages/MapPage.js'
+        "baseUrl": ".",
+        "paths": {
+            "@/*": [
+                "src/*"
+            ],
+            "@pages/*": [
+                "src/pages/*"
+            ],
+            "@utils/*": [
+                "src/utils/*"
+            ],
+            "@api/*": [
+                "src/api/*"
+            ],
+            "@db/*": [
+                "src/db/*"
+            ],
+            "@fixtures/*": [
+                "src/fixtures/*"
+            ],
+            "@data/*": [
+                "tests/fixtures/data/*"
+            ]
+        }
+    },
+    "include": [
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        "playwright.config.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}
