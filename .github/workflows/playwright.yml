@@ -4,7 +4,6 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
-
 jobs:
   test:
     timeout-minutes: 60
@@ -20,6 +19,14 @@ jobs:
         run: npx playwright install --with-deps
       - name: Run Playwright tests
         run: npx playwright test
+        env:
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          API_KEY: ${{ secrets.API_KEY }}
+          BASE_URL: ${{ secrets.BASE_URL }}
+          DB_USER: postgres
+          DB_NAME: geofencing_db
+          DB_HOST: localhost
+          DB_PORT: 5432
       - uses: actions/upload-artifact@v4
         if: always()
         with:
