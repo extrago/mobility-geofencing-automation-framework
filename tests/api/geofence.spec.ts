@@ -1,44 +1,53 @@
 import { test, expect } from '@playwright/test';
 import { GeofenceApiClient } from '../../src/api/geofenceApiClient';
-import { GeoHelper } from '../../src/utils/gis/geoHelper';
+import { DbClient } from '../../src/db/dbClient';
+import { VehicleSimulatorClient } from '../../src/simulator/vehicleClient';
 
-test.describe('Geofencing Boundary Analytics', () => {
+test.describe('Alexandria Port: End-to-End Mobility Lifecycle', () => {
     const apiClient = new GeofenceApiClient();
+    const simulator = new VehicleSimulatorClient();
 
-    const boundaryTestCases = [
-        { name: 'Clearly Inside', lat: 30.05, lng: 31.25, expected: true },
-        { name: 'Clearly Outside', lat: 30.20, lng: 31.40, expected: false },
-        { name: 'On Vertex (Edge)', lat: 30.0, lng: 31.2, expected: true }
-    ];
+    test.afterAll(async () => {
+        await DbClient.close();
+    });
 
-    test.beforeEach(async () => {
-        apiClient.getGeofence = async () => ({
-            id: 'zone-123',
+    test('Industry Scenario: Alexandria Logistics Zone Persistence and Tracking', async () => {
+        const zonePayload = {
+            name: 'Alexandria Port Logistics Hub',
+            type: 'CUSTOM',
             geometry: {
                 type: 'Feature',
                 geometry: {
                     type: 'Polygon',
-                    coordinates: [[[31.2, 30.0], [31.3, 30.0], [31.3, 30.1], [31.2, 30.1], [31.2, 30.0]]]
-                }
+                    coordinates: [[[29.85, 31.18], [29.88, 31.18], [29.88, 31.21], [29.85, 31.21], [29.85, 31.18]]]
+                },
+                properties: {}
             }
-        } as any);
+        };
 
-        apiClient.getLatestEventForVehicle = async (_vehicleId) => ({
-            eventType: 'ENTRY'
-        } as any);
-    });
+        const zone = await apiClient.createGeofence(zonePayload);
+        const zoneId = zone.id;
 
-    for (const data of boundaryTestCases) {
-        test(`Scenario: ${data.name}`, async () => {
-            const zoneResponse = await apiClient.getGeofence('zone-123');
+        expect(zoneId).toBeDefined();
 
-            const isInside = GeoHelper.isPointInsideGeofence(
-                data.lng,
-                data.lat,
-                zoneResponse.geometry
-            );
+        const dbCheck = await DbClient.getGeofenceSpatialData(zoneId);
+        expect(dbCheck).toBeDefined();
+        expect(dbCheck.name).toBe(zonePayload.name);
 
-            expect(isInside).toBe(data.expected);
+        const vehicleId = `V-ALX-${Math.floor(Math.random() * 9999)}`;
+        const alexPortLat = 31.195;
+        const alexPortLng = 29.865;
+
+        await simulator.updateLocation(vehicleId, alexPortLat, alexPortLng);
+
+        await test.step('Verify Event Generation for Alexandria Zone', async () => {
+            await expect.poll(async () => {
+                const event = await apiClient.getLatestEventForVehicle(vehicleId);
+                return event.eventType;
+            }, {
+                intervals: [1000, 2000],
+                timeout: 10000
+            }).toBe('ENTRY');
         });
-    }
+    });
 });

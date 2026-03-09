@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 // Relative path required: Playwright's esbuild runtime does NOT resolve tsconfig `paths` aliases.
 // Use '@/' alias only inside src/ files compiled via tsc — not directly in spec files.
-import { GeoHelper } from '../../src/utils/gis/geoHelper';
+import { GeoHelper } from '@/utils/gis/geoHelper.js';
 
 test.describe('GeoHelper Spatial Logic', () => {
 

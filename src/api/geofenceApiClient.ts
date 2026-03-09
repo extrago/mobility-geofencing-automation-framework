@@ -1,99 +1,48 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { envConfig } from '../utils/envConfig';
-import { logger } from '../utils/logger';
-import type {
-    GeofenceZone,
-    GeofenceEvent,
-    CreateGeofencePayload,
-    VehiclePosition,
-    GeofenceEventQuery,
-} from './apiTypes';
+import axios, { AxiosInstance } from 'axios';
 
-/**
- * GeofenceApiClient wraps all HTTP calls to the Geofencing Engine REST API.
- * Uses Axios with built-in retry logic and structured logging.
- */
 export class GeofenceApiClient {
-    private readonly http: AxiosInstance;
+    private http: AxiosInstance;
 
-    constructor(baseURL: string = envConfig.apiBaseUrl) {
+    constructor() {
+        const baseURL = process.env.API_BASE_URL || 'http://localhost:4000/api/v1';
+        const apiKey = process.env.API_KEY || '';
+
         this.http = axios.create({
-            baseURL,
+            baseURL: baseURL,
+            timeout: Number(process.env.DEFAULT_TIMEOUT) || 30000,
             headers: {
                 'Content-Type': 'application/json',
-                'x-api-key': envConfig.apiKey,
-            },
-            timeout: 15_000,
+                'x-api-key': apiKey,
+                'Authorization': apiKey ? `Bearer ${apiKey}` : ''
+            }
         });
 
-        // ── Request interceptor ─────────────────────────────────────────────────
-        this.http.interceptors.request.use((config) => {
-            logger.debug(`→ ${config.method?.toUpperCase()} ${config.url}`);
-            return config;
-        });
-
-        // ── Response interceptor ────────────────────────────────────────────────
         this.http.interceptors.response.use(
-            (response) => {
-                logger.debug(`← ${response.status} ${response.config.url}`);
-                return response;
-            },
+            (response) => response,
             (error) => {
-                logger.error(`API error: ${error.response?.status} ${error.config?.url}`, {
-                    data: error.response?.data,
-                });
+                console.error(`[API Error] ${error.config?.method?.toUpperCase()} ${error.config?.url}:`, error.response?.status || error.message);
                 return Promise.reject(error);
-            },
+            }
         );
     }
 
-    // ── Geofence Zones ─────────────────────────────────────────────────────────
-
-    async createGeofence(payload: CreateGeofencePayload): Promise<GeofenceZone> {
-        const res: AxiosResponse<GeofenceZone> = await this.http.post('/geofences', payload);
+    async createGeofence(payload: any) {
+        const res = await this.http.post('/geofences', payload);
         return res.data;
     }
 
-    async getGeofence(id: string): Promise<GeofenceZone> {
-        const res: AxiosResponse<GeofenceZone> = await this.http.get(`/geofences/${id}`);
+    async getGeofence(id: string) {
+        const res = await this.http.get(`/geofences/${id}`);
         return res.data;
     }
 
-    async listGeofences(): Promise<GeofenceZone[]> {
-        const res: AxiosResponse<GeofenceZone[]> = await this.http.get('/geofences');
+    async listGeofences() {
+        const res = await this.http.get('/geofences');
         return res.data;
     }
 
-    async deleteGeofence(id: string): Promise<void> {
-        await this.http.delete(`/geofences/${id}`);
-    }
-
-    // ── Geofence Events ────────────────────────────────────────────────────────
-
-    async getEvents(query: GeofenceEventQuery): Promise<GeofenceEvent[]> {
-        const res: AxiosResponse<GeofenceEvent[]> = await this.http.get('/events', {
-            params: query,
-        });
-        return res.data;
-    }
-
-    async getLatestEventForVehicle(vehicleId: string): Promise<GeofenceEvent> {
-        const res: AxiosResponse<GeofenceEvent> = await this.http.get(
-            `/events/vehicle/${vehicleId}/latest`,
-        );
-        return res.data;
-    }
-
-    // ── Vehicle Simulation ─────────────────────────────────────────────────────
-
-    async updateVehiclePosition(vehicle: VehiclePosition): Promise<void> {
-        await this.http.post('/vehicles/position', vehicle);
-    }
-
-    async getVehiclePosition(vehicleId: string): Promise<VehiclePosition> {
-        const res: AxiosResponse<VehiclePosition> = await this.http.get(
-            `/vehicles/${vehicleId}/position`,
-        );
+    async getLatestEventForVehicle(vehicleId: string) {
+        const res = await this.http.get(`/events/vehicle/${vehicleId}/latest`);
         return res.data;
     }
 }

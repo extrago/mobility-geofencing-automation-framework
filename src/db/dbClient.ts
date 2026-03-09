@@ -1,80 +1,48 @@
-import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
-import { envConfig } from '../utils/envConfig';
-import { logger } from '../utils/logger';
+import { Pool, QueryResult } from 'pg';
 
-/**
- * Singleton PostgreSQL/PostGIS connection pool.
- * Use `DbClient.getInstance()` to access the shared pool.
- */
 export class DbClient {
-    private static instance: DbClient;
-    private pool: Pool;
+    private static pool: Pool;
 
     private constructor() {
-        this.pool = new Pool({
-            host: envConfig.db.host,
-            port: envConfig.db.port,
-            database: envConfig.db.database,
-            user: envConfig.db.user,
-            password: envConfig.db.password,
-            ssl: envConfig.db.ssl ? { rejectUnauthorized: false } : false,
-            max: 10,
-            idleTimeoutMillis: 30_000,
-            connectionTimeoutMillis: 5_000,
-        });
-
-        this.pool.on('error', (err) => {
-            logger.error('Unexpected DB pool error', err);
-        });
-    }
-
-    static getInstance(): DbClient {
-        if (!DbClient.instance) {
-            DbClient.instance = new DbClient();
+        if (!DbClient.pool) {
+            DbClient.pool = new Pool({
+                host: process.env.DB_HOST,
+                port: Number(process.env.DB_PORT),
+                database: process.env.DB_NAME,
+                user: process.env.DB_USER,
+                password: process.env.DB_PASSWORD,
+                ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+                max: 10,
+                idleTimeoutMillis: 30000,
+                connectionTimeoutMillis: 2000,
+            });
         }
-        return DbClient.instance;
     }
 
-    /**
-     * Executes a parameterised query and returns all rows.
-     */
-    async query<T extends QueryResultRow = QueryResultRow>(
-        sql: string,
-        params?: unknown[],
-    ): Promise<T[]> {
-        const client: PoolClient = await this.pool.connect();
+    public static async query(text: string, params?: any[]): Promise<QueryResult> {
+        new DbClient();
+        const start = Date.now();
         try {
-            logger.debug(`DB query: ${sql.slice(0, 120)}`);
-            const result: QueryResult<T> = await client.query(sql, params);
-            return result.rows;
-        } finally {
-            client.release();
+            const res = await DbClient.pool.query(text, params);
+            return res;
+        } catch (error) {
+            throw new Error(`Database Query Failed: ${error}`);
         }
     }
 
-    /**
-     * Executes multiple queries within a single transaction.
-     */
-    async transaction<T>(
-        callback: (client: PoolClient) => Promise<T>,
-    ): Promise<T> {
-        const client = await this.pool.connect();
-        try {
-            await client.query('BEGIN');
-            const result = await callback(client);
-            await client.query('COMMIT');
-            return result;
-        } catch (err) {
-            await client.query('ROLLBACK');
-            logger.error('Transaction rolled back', err);
-            throw err;
-        } finally {
-            client.release();
-        }
+    public static async getGeofenceSpatialData(zoneId: string) {
+        const sql = `
+            SELECT id, name, type, ST_AsGeoJSON(geometry)::json as geometry 
+            FROM geofences 
+            WHERE id = $1
+        `;
+        const res = await this.query(sql, [zoneId]);
+        return res.rows[0];
     }
 
-    async close(): Promise<void> {
-        await this.pool.end();
-        logger.info('DB pool closed');
+    public static async close() {
+        if (DbClient.pool) {
+            await DbClient.pool.end();
+        }
     }
 }
