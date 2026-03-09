@@ -32,13 +32,21 @@ jobs:
           node-version: lts/*
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm install
+          npm install -g wait-on
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
+      - name: Initialize Database
+        run: PGPASSWORD=${{ secrets.DB_PASSWORD }} psql -h localhost -U postgres -d geofencing_db -f src/db/schema.sql
+
       - name: Run Playwright tests
-        run: npx playwright test
+        run: |
+          npm start & 
+          wait-on http://localhost:4000
+          npx playwright test
         env:
           DB_HOST: localhost
           DB_PORT: 5432
@@ -46,8 +54,8 @@ jobs:
           DB_USER: postgres
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           API_KEY: ${{ secrets.API_KEY }}
-          API_BASE_URL: ${{ secrets.API_BASE_URL }}
-          VEHICLE_SIMULATOR_URL: ${{ secrets.VEHICLE_SIMULATOR_URL }}
+          API_BASE_URL: http://localhost:4000/api/v1
+          VEHICLE_SIMULATOR_URL: http://localhost:9090
 
       - name: Setup Java
         if: always()
@@ -75,5 +83,5 @@ jobs:
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_TITLE: "Basem, Alexandria Suite Result"
+          SLACK_TITLE: "Dr. Basem, Alexandria Suite Result"
           SLACK_MESSAGE: "Pipeline for Alexandria Port finished with status: ${{ job.status }} ✅"

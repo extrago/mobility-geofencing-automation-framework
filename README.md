@@ -50,3 +50,15 @@ Visualizes test execution history, failure trends, and detailed logs for stakeho
 ```bash
 npm install
 npx playwright install --with-deps
+
+---
+
+## 👨‍💻 Developed By
+
+**Basem Abdelwahab**
+*Senior QA Automation Engineer (Candidate) | Mobility & GIS Specialist*
+ | Focused on Smart Mobility Solutions
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect_with_Me-0A66C2?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/basemabdelwahab/)
+
+---
