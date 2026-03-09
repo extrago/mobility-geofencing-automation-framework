@@ -1,64 +1,44 @@
 import { test, expect } from '@playwright/test';
 import { GeofenceApiClient } from '../../src/api/geofenceApiClient';
-import { CreateGeofencePayload } from '../../src/api/apiTypes';
+import { GeoHelper } from '../../src/utils/gis/geoHelper';
 
-test.describe('Geofencing Engine - API Integration (Mocked)', () => {
+test.describe('Geofencing Boundary Analytics', () => {
     const apiClient = new GeofenceApiClient();
 
+    const boundaryTestCases = [
+        { name: 'Clearly Inside', lat: 30.05, lng: 31.25, expected: true },
+        { name: 'Clearly Outside', lat: 30.20, lng: 31.40, expected: false },
+        { name: 'On Vertex (Edge)', lat: 30.0, lng: 31.2, expected: true }
+    ];
+
     test.beforeEach(async () => {
-        apiClient.createGeofence = async (payload: CreateGeofencePayload) => {
-            return {
-                id: 'zone-123',
-                name: payload.name,
-                type: 'CUSTOM',
-                geometry: payload.geometry,
-                createdAt: new Date().toISOString()
-            } as any;
-        };
-
-        apiClient.listGeofences = async () => {
-            return [
-                { id: 'zone-123', name: 'Cairo Logistics Hub', type: 'CUSTOM' }
-            ] as any;
-        };
-
-        apiClient.getLatestEventForVehicle = async (vehicleId: string) => {
-            return {
-                id: 'event-99',
-                vehicleId: vehicleId,
-                eventType: 'ENTRY',
-                timestamp: new Date().toISOString()
-            } as any;
-        };
-    });
-
-    test('Doctor Check: Should create and verify a new Geofence Zone', async () => {
-        const payload: CreateGeofencePayload = {
-            name: 'Cairo Logistics Hub',
-            type: 'CUSTOM',
+        apiClient.getGeofence = async () => ({
+            id: 'zone-123',
             geometry: {
                 type: 'Feature',
                 geometry: {
                     type: 'Polygon',
                     coordinates: [[[31.2, 30.0], [31.3, 30.0], [31.3, 30.1], [31.2, 30.1], [31.2, 30.0]]]
-                },
-                properties: {}
+                }
             }
-        };
+        } as any);
 
-        const newZone = await apiClient.createGeofence(payload);
-        expect(newZone).toHaveProperty('id');
-        expect(newZone.name).toBe(payload.name);
-
-        const allZones = await apiClient.listGeofences();
-        const found = allZones.find(z => z.id === newZone.id);
-        expect(found).toBeDefined();
+        apiClient.getLatestEventForVehicle = async (_vehicleId) => ({
+            eventType: 'ENTRY'
+        } as any);
     });
 
-    test('Safety Check: Should get latest event for a vehicle', async () => {
-        const vehicleId = 'V-100-XYZ';
-        const event = await apiClient.getLatestEventForVehicle(vehicleId);
+    for (const data of boundaryTestCases) {
+        test(`Scenario: ${data.name}`, async () => {
+            const zoneResponse = await apiClient.getGeofence('zone-123');
 
-        expect(['ENTRY', 'EXIT']).toContain(event.eventType);
-    });
+            const isInside = GeoHelper.isPointInsideGeofence(
+                data.lng,
+                data.lat,
+                zoneResponse.geometry
+            );
+
+            expect(isInside).toBe(data.expected);
+        });
+    }
 });
