@@ -18,8 +18,8 @@ export default defineConfig({
     workers: isCI ? 4 : undefined,
     reporter: [
         ['list'],
-        ['html', { open: 'never', outputFolder: 'playwright-report' }],
-        ['json', { outputFile: 'test-results/results.json' }],
+        ['allure-playwright', { outputFolder: 'allure-results' }],
+        ['html', { open: 'never' }]
     ],
     use: {
         baseURL: process.env.API_BASE_URL || process.env.BASE_URL || 'http://localhost:4000/api/v1',

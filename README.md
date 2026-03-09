@@ -1,125 +1,52 @@
-# Mobility Geofencing Automation Framework
+# ⚓ Alexandria Port: Intelligent Mobility & Geofencing Framework
 
-> Senior-level Playwright + TypeScript QA framework for a real-time **Mobility Geofencing Engine**.
-> Implements the **Page Object Model (POM)** and **Clean Architecture** principles across UI, API, GIS, and Database layers.
+![Playwright Tests](https://img.shields.io/badge/Test_Engine-Playwright-2EAD33?style=for-the-badge&logo=playwright&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL%20%2B%20PostGIS-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![TypeScript](https://img.shields.io/badge/Language-TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Allure](https://img.shields.io/badge/Reporting-Allure-FF6C37?style=for-the-badge&logo=allure&logoColor=white)
 
----
-
-## 📁 Project Structure
-
-```
-mobility-geofencing-automation-framework/
-│
-├── src/
-│   ├── pages/                        # POM — UI component wrappers
-│   │   ├── MapPage.ts                # Map interactions (pan, zoom, layers)
-│   │   └── GeofencePanel.ts          # Zone creation / edit sidebar
-│   │
-│   ├── utils/
-│   │   ├── gis/
-│   │   │   ├── geoJsonUtils.ts       # @turf/turf: containment, area, bbox
-│   │   │   └── coordinateCalculator.ts # Haversine, bearing, projection, interpolation
-│   │   ├── logger.ts                 # Winston structured logger
-│   │   └── envConfig.ts             # Typed env variable config
-│   │
-│   ├── api/
-│   │   ├── geofenceApiClient.ts      # Axios REST client (zones, events, vehicles)
-│   │   └── apiTypes.ts              # Shared TypeScript contracts
-│   │
-│   ├── db/
-│   │   ├── dbClient.ts              # Singleton pg Pool + transaction helper
-│   │   └── spatialQueries.ts        # PostGIS spatial SQL queries
-│   │
-│   └── fixtures/
-│       └── testFixtures.ts          # Playwright extended test fixtures
-│
-├── tests/
-│   ├── e2e/
-│   │   ├── vehicleEnteringRestrictedZone.spec.ts   # Full-stack entry scenario
-│   │   └── geofenceActivation.spec.ts              # Zone lifecycle scenario
-│   │
-│   └── fixtures/
-│       └── data/
-│           ├── restrictedZone.json   # GeoJSON polygon fixture
-│           └── vehicleRoute.json     # GeoJSON route (outside → inside)
-│
-├── playwright.config.ts
-├── tsconfig.json
-├── package.json
-├── .env.example
-├── .eslintrc.json
-└── .gitignore
-```
+An enterprise-grade automation solution for **Smart Logistics** and **Vehicle Tracking**, specifically tailored for the high-density maritime environment of **Alexandria Port, Egypt**.
 
 ---
 
-## 🚀 Quick Start
+## 🏗️ 4-Layer Validation Strategy
+This framework ensures data integrity from the coordinate level up to the final system event using a multi-tier approach:
 
-### 1. Install dependencies
+
+
+| Layer | Responsibility | Technology |
+|-------|----------------|------------|
+| **GIS Logic** | Client-side spatial validation (containment) | `Turf.js` |
+| **API** | RESTful Geofence CRUD & Event Retrieval | `Axios` |
+| **Database** | Server-side PostGIS spatial assertions | `pg` (PostgreSQL) |
+| **UI** | Map visualization & Alert verification | `Playwright` |
+
+---
+
+## 🚀 Key Features Implemented
+
+### 1. Trajectory Simulation (Smart Tracking)
+Unlike static point testing, this framework simulates a **moving vehicle trajectory** from the **Alexandria Port Gate** to the **Loading Docks**, verifying that events are triggered precisely at the boundary.
+
+### 2. Negative & Chaos Testing
+Validated system resilience against:
+- Invalid GPS coordinates (out-of-range).
+- Unauthorized API access (Security).
+- Database connection timeouts and missing resources.
+
+### 3. Professional Allure Dashboard
+Visualizes test execution history, failure trends, and detailed logs for stakeholders.
+
+---
+
+## 🛠️ Environment Setup
+
+### 1. Prerequisites
+- **Node.js** 18+
+- **PostgreSQL 14+** with **PostGIS** extension
+- **JDK** (For Allure Reporting)
+
+### 2. Installation
 ```bash
 npm install
 npx playwright install --with-deps
-```
-
-### 2. Configure environment
-```bash
-cp .env.example .env
-# Edit .env with your DB credentials and endpoint URLs
-```
-
-### 3. Run tests
-```bash
-# All tests
-npm test
-
-# E2E only
-npm run test:e2e
-
-# Interactive UI mode
-npm run test:ui
-
-# Headed (see the browser)
-npm run test:headed
-```
-
-### 4. View report
-```bash
-npm run test:report
-```
-
----
-
-## 🧪 Test Architecture
-
-Each E2E test scenario exercises **four independent layers**:
-
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **GIS** | `@turf/turf` | Client-side spatial logic (containment, routing) |
-| **API** | `axios` | REST calls to the Geofencing Engine |
-| **DB** | `pg` + PostGIS | Server-side spatial SQL assertions |
-| **UI** | Playwright | Browser-level visual verification |
-
----
-
-## 🗄️ Database Requirement
-
-Requires **PostgreSQL 14+** with the **PostGIS** extension:
-
-```sql
-CREATE EXTENSION IF NOT EXISTS postgis;
-```
-
----
-
-## 🔑 Key Dependencies
-
-| Package | Purpose |
-|---------|---------|
-| `@playwright/test` | Browser automation & test runner |
-| `typescript` | Type safety across all layers |
-| `@turf/turf` | GIS calculations and spatial operations |
-| `pg` | PostgreSQL client (PostGIS compatible) |
-| `axios` | HTTP client for REST API layer |
-| `winston` | Structured logging |
-| `dotenv` | Environment variable management |

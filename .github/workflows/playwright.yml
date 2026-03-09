@@ -1,35 +1,79 @@
-name: Playwright Full Automation
+name: Playwright Mobility Framework CI
 on:
   push:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+
 jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgis/postgis:14-3.2
+        env:
+          POSTGRES_DB: geofencing_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
+
       - name: Install dependencies
         run: npm install
+
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
+
       - name: Run Playwright tests
-        run: npx playwright test tests/unit
+        run: npx playwright test
         env:
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          API_KEY: ${{ secrets.API_KEY }}
-          BASE_URL: ${{ secrets.BASE_URL }}
-          DB_USER: postgres
-          DB_NAME: geofencing_db
           DB_HOST: localhost
           DB_PORT: 5432
-      - uses: actions/upload-artifact@v4
+          DB_NAME: geofencing_db
+          DB_USER: postgres
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          API_KEY: ${{ secrets.API_KEY }}
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          VEHICLE_SIMULATOR_URL: ${{ secrets.VEHICLE_SIMULATOR_URL }}
+
+      - name: Setup Java
         if: always()
+        uses: actions/setup-java@v3
         with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 30
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Generate Allure Report
+        if: always()
+        run: |
+          npm install -g allure-commandline
+          allure generate allure-results --clean -o allure-report
+
+      - name: Upload Allure Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-alexandria
+          path: allure-report/
+          retention-days: 7
+
+      - name: Slack/Discord Notification
+        if: always()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_TITLE: "Basem, Alexandria Suite Result"
+          SLACK_MESSAGE: "Pipeline for Alexandria Port finished with status: ${{ job.status }} ✅"
