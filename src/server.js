@@ -43,7 +43,86 @@ function send(res, statusCode, body) {
     res.end(payload);
 }
 
+function sendHtml(res, html) {
+    const buf = Buffer.from(html, 'utf8');
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Content-Length': buf.length });
+    res.end(buf);
+}
+
 function nowIso() { return new Date().toISOString(); }
+
+/** Build the /map HTML page reflecting current in-memory state */
+function buildMapPage() {
+    const hasRestrictedEntry = [...events.values()].some(e => e.eventType === 'ENTRY');
+    const zoneMarkers = [...geofences.values()]
+        .map(z => `<div data-testid="zone-marker-${z.id}" class="zone-marker" data-zone-id="${z.id}"></div>`)
+        .join('\n        ');
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Geofencing Map</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:sans-serif;background:#1a1a2e;color:#eee;height:100vh;display:flex;flex-direction:column}
+    #map-container{flex:1;position:relative;background:#162447;border:2px solid #0f3460}
+    .zone-marker{position:absolute;width:12px;height:12px;border-radius:50%;background:#e94560;border:2px solid #fff}
+    #zone-overlay-restricted{position:absolute;inset:0;background:rgba(233,69,96,.15);pointer-events:none;transition:background .3s}
+    #zone-overlay-restricted.alert{background:rgba(233,69,96,.45)}
+    #geofence-alert-banner{position:fixed;top:0;left:0;right:0;padding:12px 24px;background:#e94560;color:#fff;font-weight:700;z-index:9999;display:${hasRestrictedEntry ? 'block' : 'none'}}
+    #geofence-panel{width:280px;padding:16px;background:#0f3460}
+    button{padding:6px 12px;margin:4px;background:#e94560;border:none;color:#fff;cursor:pointer;border-radius:4px}
+  </style>
+</head>
+<body>
+  <div id="geofence-alert-banner" data-testid="geofence-alert-banner">
+    &#9888; Restricted Zone &mdash; Vehicle has entered a restricted geofence area
+  </div>
+  <div style="display:flex;flex:1">
+    <div id="map-container" data-testid="map-container">
+      <div id="zone-overlay-restricted"
+           data-testid="zone-overlay-restricted"
+           class="${hasRestrictedEntry ? 'alert' : ''}"></div>
+      ${zoneMarkers}
+      <button data-testid="zoom-in">+</button>
+      <button data-testid="zoom-out">&minus;</button>
+      <button data-testid="layer-toggle">Layers</button>
+    </div>
+    <aside id="geofence-panel" data-testid="geofence-panel">
+      <h2>Geofence Zones</h2>
+    </aside>
+  </div>
+  <script>
+    window.mapInstance = {
+      panTo: function(c) { console.log('panTo', c); },
+      getZoom: function() { return 12; }
+    };
+    async function refresh() {
+      try {
+        const r = await fetch('/api/v1/geofences');
+        const { data: zones } = await r.json();
+        const container = document.getElementById('map-container');
+        container.querySelectorAll('.zone-marker').forEach(el => el.remove());
+        (zones || []).forEach(function(z) {
+          const d = document.createElement('div');
+          d.setAttribute('data-testid', 'zone-marker-' + z.id);
+          d.className = 'zone-marker';
+          container.appendChild(d);
+        });
+        const er = await fetch('/api/v1/events?eventType=ENTRY&limit=1');
+        const { data: evts } = await er.json();
+        const hasEntry = evts && evts.length > 0;
+        document.getElementById('zone-overlay-restricted').className = hasEntry ? 'alert' : '';
+        document.getElementById('geofence-alert-banner').style.display = hasEntry ? 'block' : 'none';
+      } catch(e) {}
+    }
+    setInterval(refresh, 1000);
+  </script>
+</body>
+</html>`;
+}
 
 /**
  * Simple point-in-polygon test (ray-casting) for GeoJSON Polygon coordinates.
@@ -90,8 +169,13 @@ async function apiHandler(req, res) {
         : rawUrl;
 
     // ── Health ──────────────────────────────────────────────────────────────────
-    if (path === '/' || path === '/health') {
+    if (method === 'GET' && (path === '/' || path === '/health')) {
         return send(res, 200, { status: 'ok', service: 'geofencing-api', ts: nowIso() });
+    }
+
+    // ── Map UI page ─────────────────────────────────────────────────────────────
+    if (method === 'GET' && (rawUrl === '/map' || rawUrl === '/map/')) {
+        return sendHtml(res, buildMapPage());
     }
 
     // ── Geofences ───────────────────────────────────────────────────────────────
