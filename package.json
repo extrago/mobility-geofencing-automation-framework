@@ -2,19 +2,24 @@
   "name": "mobility-geofencing-automation-framework",
   "version": "1.0.0",
   "description": "Senior-level Playwright + TypeScript automation framework for a Mobility Geofencing Engine",
-  "author": "QA Engineering",
+  "author": "Dr. Basem Abdelwahab",
   "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
+    "start": "node src/server.js",
     "test": "playwright test",
-    "test:e2e": "playwright test tests/e2e",
+    "test:alexandria": "playwright test tests/e2e/alexandria",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
-    "test:report": "playwright show-report",
+    "allure:generate": "allure generate allure-results --clean -o allure-report",
+    "allure:open": "allure open allure-report",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "typecheck": "tsc --noEmit",
-    "db:migrate": "ts-node src/db/migrations/run.ts",
-    "codegen": "playwright codegen"
+    "db:migrate": "ts-node src/db/migrations/run.ts"
   },
   "dependencies": {
     "@turf/turf": "^6.5.0",
@@ -35,16 +40,7 @@
     "eslint": "^8.57.0",
     "eslint-plugin-playwright": "^1.6.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "main": "index.js",
-  "directories": {
-    "test": "tests"
-  },
-  "keywords": [],
-  "license": "ISC",
-  "type": "commonjs"
+    "typescript": "^5.9.3",
+    "wait-on": "^7.2.0"
+  }
 }
