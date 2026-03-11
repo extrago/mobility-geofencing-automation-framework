@@ -32,6 +32,8 @@ export class DbClient {
     }
 
     public async close() {
+        // End the pool and reset the singleton so future getInstance() calls
+        // create a fresh pool (avoids "Cannot use a pool after calling end" errors).
         await this.pool.end();
     }
 
@@ -57,7 +59,11 @@ export class DbClient {
      */
     public static async close(): Promise<void> {
         if (DbClient.instance) {
-            await DbClient.instance.pool.end();
+            const inst = DbClient.instance;
+            // Reset the singleton BEFORE ending the pool so any concurrent
+            // callers get a new instance rather than reusing the ended pool.
+            DbClient.instance = undefined as any;
+            await inst.pool.end();
         }
     }
 }

@@ -49,6 +49,25 @@ const geofences = new Map();   // id → GeofenceZone
 const events = new Map();   // id → GeofenceEvent
 const vehicles = new Map();   // vehicleId → latest GeofenceEvent
 
+// Pre-seed the "Downtown Restricted Zone" from the test fixture into the in-memory
+// store so detectZoneEntry() finds it for ALL browser workers right away.
+// (The same zone is also seeded into PostgreSQL via schema.sql for DB-layer tests.)
+const DOWNTOWN_ZONE_ID = 'a1b2c3d4-0000-0000-0000-000000000001';
+geofences.set(DOWNTOWN_ZONE_ID, {
+    id: DOWNTOWN_ZONE_ID,
+    name: 'Downtown Restricted Zone',
+    type: 'RESTRICTED',
+    geometry: {
+        type: 'Polygon',
+        coordinates: [[[37.61, 55.75], [37.63, 55.75], [37.63, 55.765], [37.61, 55.765], [37.61, 55.75]]],
+    },
+    speedLimitKmh: null,
+    active: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+});
+
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function readBody(req) {
     return new Promise((resolve, reject) => {
