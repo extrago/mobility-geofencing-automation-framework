@@ -116,10 +116,16 @@ export async function cleanupTestVehicleData(
     vehicleIdPattern: string,
     client?: PoolClient,
 ): Promise<void> {
-    const sql = `DELETE FROM geofence_events WHERE vehicle_id LIKE $1`;
+    // Guard: only delete events older than 5 minutes.
+    // With 4 parallel browser workers, one browser's afterAll can run while
+    // another browser's DB tests are still querying recently-written events.
+    // Limiting deletion to events > 5 minutes old prevents that contamination
+    // while still cleaning up stale data from previous test runs.
+    const sql = `DELETE FROM geofence_events WHERE vehicle_id LIKE $1 AND timestamp < NOW() - INTERVAL '5 minutes'`;
     if (client) {
         await client.query(sql, [vehicleIdPattern]);
     } else {
         await db.query(sql, [vehicleIdPattern]);
     }
 }
+
