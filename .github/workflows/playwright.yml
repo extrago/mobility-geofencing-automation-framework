@@ -54,6 +54,10 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps
 
+      - name: Install Playwright System Dependencies (cache hit)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps
+
       - name: Initialize Database
         run: PGPASSWORD=${{ secrets.DB_PASSWORD }} psql -h localhost -U postgres -d geofencing_db -f src/db/schema.sql
 
