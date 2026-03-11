@@ -36,8 +36,19 @@ export class GeofenceApiClient {
         return res.data;
     }
 
-    async listGeofences() {
+    async listGeofences(): Promise<any[]> {
         const res = await this.http.get('/geofences');
+        // Server returns paginated { data: [...], total, page, pageSize }
+        return Array.isArray(res.data) ? res.data : (res.data?.data ?? res.data);
+    }
+
+    async deleteGeofence(id: string) {
+        const res = await this.http.delete(`/geofences/${id}`);
+        return res.status;
+    }
+
+    async updateVehiclePosition(payload: any) {
+        const res = await this.http.post('/vehicles/position', payload);
         return res.data;
     }
 
