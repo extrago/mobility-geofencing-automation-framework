@@ -39,26 +39,25 @@ Visualizes test execution history, failure trends, and detailed logs for stakeho
 
 ---
 
-## 🛠️ Environment Setup
+Component,Minimum Version,Purpose
+Node.js,v18.0.0+,Framework Runtime
+PostgreSQL,v14.0+,Data Persistence
+PostGIS Extension,v3.0+,Spatial Geometry Engine
+Java (JDK),v11+,Allure Report Engine
 
-### 1. Prerequisites
-- **Node.js** 18+
-- **PostgreSQL 14+** with **PostGIS** extension
-- **JDK** (For Allure Reporting)
+👨‍💻 Engineering & Development
 
-### 2. Installation
-```bash
-npm install
-npx playwright install --with-deps
+<div align="center">
+<h3>Basem Abdelwahab</h3>
+<p><b>Senior QA Automation Engineer (Candidate) | Mobility & GIS Quality Specialist</b></p>
 
----
 
-## 👨‍💻 Developed By
+<p>
+<a href="https://www.linkedin.com/in/basemabdelwahab/">
+<img src="https://img.shields.io/badge/LinkedIn-Connect_with_Me-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn" />
+</a>
+</p>
 
-**Basem Abdelwahab**
-*Senior QA Automation Engineer (Candidate) | Mobility & GIS Specialist*
- | Focused on Smart Mobility Solutions
-
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect_with_Me-0A66C2?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/basemabdelwahab/)
-
+<p>🚀 <b>Focus:</b> Scalable Automation Architectures • Spatial Data Integrity • Enterprise CI/CD Pipelines</p>
+</div>
 ---
