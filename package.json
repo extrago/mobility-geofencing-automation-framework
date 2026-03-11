@@ -9,6 +9,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
+    "start": "node src/server.js",
     "test": "playwright test",
     "test:alexandria": "playwright test tests/e2e/alexandria",
     "test:ui": "playwright test --ui",
