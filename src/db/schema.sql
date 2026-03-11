@@ -31,3 +31,20 @@ CREATE TABLE IF NOT EXISTS geofence_events (
 
 CREATE INDEX IF NOT EXISTS idx_geofence_events_vehicle
     ON geofence_events (vehicle_id);
+
+-- ── Seed data (idempotent) ────────────────────────────────────────────────────
+-- "Downtown Restricted Zone" is used by vehicleEnteringRestrictedZone.spec.ts
+-- to verify PostGIS spatial containment queries.
+INSERT INTO geofence_zones (id, name, type, geometry, active)
+VALUES (
+    'a1b2c3d4-0000-0000-0000-000000000001',
+    'Downtown Restricted Zone',
+    'RESTRICTED',
+    ST_SetSRID(
+        ST_GeomFromGeoJSON('{"type":"Polygon","coordinates":[[[37.61,55.75],[37.63,55.75],[37.63,55.765],[37.61,55.765],[37.61,55.75]]]}'),
+        4326
+    ),
+    true
+)
+ON CONFLICT (id) DO NOTHING;
+

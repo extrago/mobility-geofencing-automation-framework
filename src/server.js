@@ -12,6 +12,34 @@
 const http = require('http');
 const { randomUUID } = require('crypto');
 
+// ── Optional PostgreSQL write-through ─────────────────────────────────────────
+// If DB environment variables are present, the server writes to PostgreSQL
+// so tests that call DbClient or spatialQueries directly see the data.
+let pgPool = null;
+try {
+    if (process.env.DB_HOST || process.env.DATABASE_URL) {
+        const { Pool } = require('pg');
+        pgPool = new Pool({
+            host: process.env.DB_HOST || 'localhost',
+            port: Number(process.env.DB_PORT || 5432),
+            database: process.env.DB_NAME || 'geofencing_db',
+            user: process.env.DB_USER || 'postgres',
+            password: process.env.DB_PASSWORD || '',
+            ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+        });
+        console.log('[server] PostgreSQL write-through enabled');
+    }
+} catch (e) {
+    console.warn('[server] pg not available, running in-memory only:', e.message);
+}
+
+/** Fire-and-forget DB write — never throws. */
+async function dbRun(sql, params) {
+    if (!pgPool) return;
+    try { await pgPool.query(sql, params); }
+    catch (e) { console.warn('[server] DB write-through failed:', e.message); }
+}
+
 const API_PORT = Number(process.env.PORT || 4000);
 const SIM_PORT = Number(process.env.SIM_PORT || 9090);
 const API_PREFIX = '/api/v1';
@@ -198,6 +226,14 @@ async function apiHandler(req, res) {
             updatedAt: nowIso(),
         };
         geofences.set(id, zone);
+        // Write-through to PostgreSQL so DbClient.getGeofenceSpatialData() finds it
+        const geomJson = zone.geometry ? JSON.stringify(zone.geometry.geometry ?? zone.geometry) : null;
+        await dbRun(
+            `INSERT INTO geofence_zones (id, name, type, geometry, active)
+             VALUES ($1, $2, $3, CASE WHEN $4::text IS NOT NULL THEN ST_SetSRID(ST_GeomFromGeoJSON($4), 4326) ELSE NULL END, true)
+             ON CONFLICT (id) DO NOTHING`,
+            [id, zone.name, zone.type, geomJson]
+        );
         return send(res, 201, zone);
     }
 
@@ -248,6 +284,12 @@ async function apiHandler(req, res) {
             };
             events.set(ev.id, ev);
             vehicles.set(vehicleId, ev);
+            // Write-through: persist ENTRY event to PostgreSQL
+            await dbRun(
+                `INSERT INTO geofence_events (id, vehicle_id, geofence_id, event_type, latitude, longitude, speed, heading)
+                 VALUES ($1, $2, $3::uuid, $4, $5, $6, $7, $8) ON CONFLICT (id) DO NOTHING`,
+                [ev.id, ev.vehicleId, ev.geofenceId, ev.eventType, ev.latitude, ev.longitude, ev.speed, ev.heading]
+            );
             return send(res, 200, ev);
         }
 
@@ -289,6 +331,12 @@ async function apiHandler(req, res) {
         };
         events.set(id, event);
         vehicles.set(event.vehicleId, event);
+        // Write-through to PostgreSQL
+        await dbRun(
+            `INSERT INTO geofence_events (id, vehicle_id, geofence_id, event_type, latitude, longitude, speed, heading)
+             VALUES ($1, $2, $3::uuid, $4, $5, $6, $7, $8) ON CONFLICT (id) DO NOTHING`,
+            [id, event.vehicleId, event.geofenceId, event.eventType, event.latitude, event.longitude, event.speed, event.heading]
+        );
         return send(res, 201, event);
     }
 
