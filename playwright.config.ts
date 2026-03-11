@@ -8,21 +8,31 @@ const isCI = !!process.env['CI'];
 
 export default defineConfig({
     testDir: './tests',
-    timeout: Number(process.env.DEFAULT_TIMEOUT) || 60_000,
+    timeout: Number(process.env['DEFAULT_TIMEOUT']) || 60_000,
     expect: {
         timeout: 10_000,
     },
     fullyParallel: true,
     forbidOnly: isCI,
     retries: isCI ? 2 : 0,
-    workers: isCI ? 4 : undefined,
+    workers: isCI ? 4 : '100%',
     reporter: [
         ['list'],
         ['allure-playwright', { outputFolder: 'allure-results' }],
         ['html', { open: 'never' }]
     ],
+    webServer: {
+        // server.js starts BOTH port 4000 (API/UI) and port 9090 (simulator)
+        command: 'node src/server.js',
+        url: 'http://localhost:4000/health',
+        timeout: 30_000,
+        reuseExistingServer: !isCI,
+        stdout: 'pipe',
+        stderr: 'pipe',
+    },
     use: {
-        baseURL: process.env.API_BASE_URL || process.env.BASE_URL || 'http://localhost:4000/api/v1',
+        // Base for page.goto() — UI pages live at the server root
+        baseURL: process.env['BASE_URL'] || 'http://localhost:4000',
         screenshot: 'only-on-failure',
         video: 'retain-on-failure',
         trace: 'retain-on-failure',
